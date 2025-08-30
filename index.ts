@@ -3,6 +3,10 @@ import bodyParser from "body-parser";
 import dotenv from "dotenv";
 import cors from "cors";
 import healthCheckHandler from "./api/healthCheck";
+import loginHandler from "./api/auth/login";
+import signupHandler from "./api/auth/signup";
+import meHandler from "./api/auth/me";
+import getPublishedEventsHandler from "./api/modules/get-published-events";
 dotenv.config();
 
 const app = express();
@@ -29,6 +33,10 @@ app.get("/api/v1/auth/test-cors", (req, res) => {
 });
 
 app.get("/api/v1/health", healthCheckHandler);
+app.post("/api/v1/auth/login", loginHandler);
+app.post("/api/v1/auth/signup", signupHandler);
+app.get("/api/v1/auth/me", meHandler);
+app.get("/api/v1/events/get-published-events", getPublishedEventsHandler);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
