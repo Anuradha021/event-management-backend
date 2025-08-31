@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { db } from "../firebase";
+import { db } from "../../config/firebase";
 
 export default async function getPublishedEventsHandler(req: Request, res: Response) {
   
@@ -24,7 +24,6 @@ export default async function getPublishedEventsHandler(req: Request, res: Respo
     const events = snapshot.docs.map(doc => {
       const data = doc.data();
       
-      // Proper timestamp handling
       const convertTimestamp = (timestamp: any) => {
         if (!timestamp) return null;
         if (timestamp.toDate) return timestamp.toDate().toISOString();

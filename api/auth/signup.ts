@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { db } from "../firebase";
+import { db } from "../config/firebase";
 import admin from "firebase-admin";
 
 export default async function signupHandler(req: Request, res: Response) {
