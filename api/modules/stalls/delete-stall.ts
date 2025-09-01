@@ -2,16 +2,16 @@ import { Request, Response } from "express";
 import { authenticateToken } from "../../middlewares/authMiddleware";
 import { db } from "../../config/firebase";
 
-async function getTracksHandler(req: Request, res: Response) {
+async function deleteStallHandler(req: Request, res: Response) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
-  if (req.method !== "GET") {
+  if (req.method !== "DELETE") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
@@ -21,42 +21,40 @@ async function getTracksHandler(req: Request, res: Response) {
       return res.status(401).json({ error: authResult.error });
     }
 
-    const { eventId, zoneId } = req.query;
+    const { stallId } = req.params;
+    const { eventId, zoneId, trackId } = req.query;
     
-    if (!eventId || !zoneId) {
+    if (!eventId || !zoneId || !trackId || !stallId) {
       return res.status(400).json({ 
         success: false, 
-        error: "eventId and zoneId are required" 
+        error: "eventId, zoneId, trackId, and stallId are required" 
       });
     }
 
-    const tracksSnapshot = await db.collection("events")
+    await db
+      .collection("events")
       .doc(eventId as string)
       .collection("zones")
       .doc(zoneId as string)
       .collection("tracks")
-      .get();
-
-    const tracks = tracksSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      title: doc.data().title || doc.data().name || 'Unnamed Track',
-      description: doc.data().description || '',
-      createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-    }));
+      .doc(trackId as string)
+      .collection("stalls")
+      .doc(stallId as string)
+      .delete();
 
     res.status(200).json({
       success: true,
       data: {
-        tracks
+        message: "Stall deleted successfully"
       }
     });
   } catch (e: any) {
-    console.error("Error fetching tracks:", e);
+    console.error("Error deleting stall:", e);
     res.status(500).json({ 
       success: false, 
-      error: e.message || "Failed to fetch tracks" 
+      error: e.message || "Failed to delete stall" 
     });
   }
 }
 
-export default getTracksHandler;
+export default deleteStallHandler;

@@ -35,17 +35,11 @@ async function getZonesHandler(req: Request, res: Response) {
       .collection("zones")
       .get();
 
-    const convertTimestamp = (timestamp: any) => {
-      if (!timestamp) return null;
-      if (timestamp.toDate) return timestamp.toDate().toISOString();
-      if (timestamp instanceof Date) return timestamp.toISOString();
-      return timestamp;
-    };
-
     const zones = zonesSnapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data(),
-      createdAt: convertTimestamp(doc.data().createdAt),
+      title: doc.data().title || doc.data().name || 'Unnamed Zone',
+      description: doc.data().description || '',
+      createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
     }));
 
     res.status(200).json({

@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { authenticateToken } from "../../middlewares/authMiddleware";
 import { db } from "../../config/firebase";
 
-async function getTracksHandler(req: Request, res: Response) {
+async function getStallsHandler(req: Request, res: Response) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -21,42 +21,46 @@ async function getTracksHandler(req: Request, res: Response) {
       return res.status(401).json({ error: authResult.error });
     }
 
-    const { eventId, zoneId } = req.query;
+    const { eventId, zoneId, trackId } = req.query;
     
-    if (!eventId || !zoneId) {
+    if (!eventId || !zoneId || !trackId) {
       return res.status(400).json({ 
         success: false, 
-        error: "eventId and zoneId are required" 
+        error: "eventId, zoneId, and trackId are required" 
       });
     }
 
-    const tracksSnapshot = await db.collection("events")
+    const stallsSnapshot = await db
+      .collection("events")
       .doc(eventId as string)
       .collection("zones")
       .doc(zoneId as string)
       .collection("tracks")
+      .doc(trackId as string)
+      .collection("stalls")
       .get();
 
-    const tracks = tracksSnapshot.docs.map((doc) => ({
+    const stalls = stallsSnapshot.docs.map((doc) => ({
       id: doc.id,
-      title: doc.data().title || doc.data().name || 'Unnamed Track',
+      name: doc.data().name || 'Unnamed Stall',
       description: doc.data().description || '',
       createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+      updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
     }));
 
     res.status(200).json({
       success: true,
       data: {
-        tracks
+        stalls
       }
     });
   } catch (e: any) {
-    console.error("Error fetching tracks:", e);
+    console.error("Error fetching stalls:", e);
     res.status(500).json({ 
       success: false, 
-      error: e.message || "Failed to fetch tracks" 
+      error: e.message || "Failed to fetch stalls" 
     });
   }
 }
 
-export default getTracksHandler;
+export default getStallsHandler;

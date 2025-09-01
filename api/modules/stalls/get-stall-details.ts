@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { authenticateToken } from "../../middlewares/authMiddleware";
 import { db } from "../../config/firebase";
 
-async function getTracksHandler(req: Request, res: Response) {
+async function getStallDetailsHandler(req: Request, res: Response) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -21,42 +21,49 @@ async function getTracksHandler(req: Request, res: Response) {
       return res.status(401).json({ error: authResult.error });
     }
 
-    const { eventId, zoneId } = req.query;
+    const { eventId, zoneId, trackId, stallId } = req.query;
     
-    if (!eventId || !zoneId) {
+    if (!eventId || !zoneId || !trackId || !stallId) {
       return res.status(400).json({ 
         success: false, 
-        error: "eventId and zoneId are required" 
+        error: "eventId, zoneId, trackId, and stallId are required" 
       });
     }
 
-    const tracksSnapshot = await db.collection("events")
+    const stallDoc = await db
+      .collection("events")
       .doc(eventId as string)
       .collection("zones")
       .doc(zoneId as string)
       .collection("tracks")
+      .doc(trackId as string)
+      .collection("stalls")
+      .doc(stallId as string)
       .get();
 
-    const tracks = tracksSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      title: doc.data().title || doc.data().name || 'Unnamed Track',
-      description: doc.data().description || '',
-      createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-    }));
+    if (!stallDoc.exists) {
+      return res.status(404).json({ 
+        success: false,
+        error: "Stall not found" 
+      });
+    }
 
     res.status(200).json({
       success: true,
       data: {
-        tracks
+        id: stallDoc.id,
+        ...stallDoc.data(),
+        createdAt: stallDoc.data()?.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+        updatedAt: stallDoc.data()?.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
       }
     });
   } catch (e: any) {
-    console.error("Error fetching tracks:", e);
+    console.error("Error fetching stall details:", e);
     res.status(500).json({ 
       success: false, 
-      error: e.message || "Failed to fetch tracks" 
+      error: e.message || "Failed to fetch stall details" 
     });
   }
 }
 
-export default getTracksHandler;
+export default getStallDetailsHandler;
