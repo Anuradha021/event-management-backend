@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { db, auth } from "./firebase";  
+import { db, auth } from "../config/firebase";  
 
 
 export default async function healthCheckHandler(req: Request, res: Response) {
