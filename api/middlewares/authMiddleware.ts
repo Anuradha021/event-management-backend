@@ -5,9 +5,12 @@ export interface AuthResult {
   success: boolean;
   error?: string;
   uid?: string;
+  userName?: string;
+  userEmail?: string;
   user?: {
     uid: string;
     email?: string;
+    displayName?: string;
     role?: string;
     isOrganizer?: boolean;
     isSystemAdmin?: boolean;
@@ -29,7 +32,6 @@ export const authenticateToken = async (req: Request): Promise<AuthResult> => {
     }
 
     try {
-     
       const decodedToken = await admin.auth().verifyIdToken(token);
       const uid = decodedToken.uid;
     
@@ -44,9 +46,12 @@ export const authenticateToken = async (req: Request): Promise<AuthResult> => {
       return {
         success: true,
         uid,
+        userName: userData?.displayName || userData?.name || decodedToken.name || 'User',
+        userEmail: userData?.email || decodedToken.email || '',
         user: {
           uid,
           email: userData?.email,
+          displayName: userData?.displayName,
           role: userData?.role,
           isOrganizer: userData?.isOrganizer,
           isSystemAdmin: userData?.isSystemAdmin,
@@ -54,7 +59,6 @@ export const authenticateToken = async (req: Request): Promise<AuthResult> => {
       };
       
     } catch (firebaseError) {
-
       try {
         const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
         const uid = payload.uid;
@@ -63,18 +67,19 @@ export const authenticateToken = async (req: Request): Promise<AuthResult> => {
           return { success: false, error: 'No UID in token payload' };
         }
         
-       
-        await admin.auth().getUser(uid);
-        
+        const userRecord = await admin.auth().getUser(uid);
         const userDoc = await admin.firestore().collection('users').doc(uid).get();
         const userData = userDoc.data();
         
         return {
           success: true,
           uid,
+          userName: userData?.displayName || userData?.name || userRecord.displayName || 'User',
+          userEmail: userData?.email || userRecord.email || '',
           user: {
             uid,
             email: userData?.email,
+            displayName: userData?.displayName,
             role: userData?.role,
             isOrganizer: userData?.isOrganizer,
             isSystemAdmin: userData?.isSystemAdmin,
@@ -101,24 +106,3 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
   (req as any).user = authResult.user;
   next();
 };
-
-export const adminMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-  const authResult = await authenticateToken(req);
-  
-  if (!authResult.success || !authResult.user) {
-    return res.status(401).json({ error: authResult.error || 'Authentication failed' });
-  }
-
-  const isAdmin = authResult.user.role === 'admin' || 
-                 authResult.user.role === 'system_admin' || 
-                 authResult.user.isSystemAdmin === true;
-
-  if (!isAdmin) {
-    return res.status(403).json({ error: 'Admin access required' });
-  }
-
-  (req as any).user = authResult.user;
-  next();
-};
-
-export const authenticateAdmin = adminMiddleware;
