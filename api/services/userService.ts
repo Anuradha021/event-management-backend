@@ -12,25 +12,31 @@ export interface UserProfile {
 
 export class UserService {
     async getUserProfile(userId: string): Promise<UserProfile> {
-        const userDoc = await admin.firestore()
-            .collection("users")
-            .doc(userId)
-            .get();
+        try {
+            const userDoc = await admin.firestore()
+                .collection("users")
+                .doc(userId)
+                .get();
 
-        if (!userDoc.exists) {
-            throw new Error("User not found");
+            if (!userDoc.exists) {
+                throw new Error("User not found");
+            }
+
+            const userData = userDoc.data();
+
+            // Ensure all required fields are present
+            return {
+                id: userDoc.id,
+                name: userData?.name || userData?.displayName || "User",
+                email: userData?.email || "",
+                isOrganizer: userData?.isOrganizer || false,
+                role: userData?.role || "user",
+                createdAt: userData?.createdAt?.toDate()?.toISOString() || new Date().toISOString(),
+                updatedAt: userData?.updatedAt?.toDate()?.toISOString() || new Date().toISOString()
+            };
+        } catch (error) {
+            console.error('Firestore error:', error);
+            throw error;
         }
-
-        const userData = userDoc.data();
-
-        return {
-            id: userDoc.id,
-            name: userData?.name || userData?.displayName || "User",
-            email: userData?.email || "",
-            isOrganizer: userData?.isOrganizer || false,
-            role: userData?.role || "user",
-            createdAt: userData?.createdAt?.toDate().toISOString(),
-            updatedAt: userData?.updatedAt?.toDate().toISOString()
-        };
     }
 }

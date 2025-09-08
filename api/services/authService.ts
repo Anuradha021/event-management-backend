@@ -23,7 +23,6 @@ export class AuthService {
       password,
       displayName: name,
     });
-
     await db.collection("users").doc(userRecord.uid).set({
       uid: userRecord.uid,
       email,
@@ -31,25 +30,18 @@ export class AuthService {
       role: role || "employee",
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
-
     const customToken = await admin.auth().createCustomToken(userRecord.uid);
-
     return { uid: userRecord.uid, token: customToken };
   }
 
   async getUserProfile(token: string) {
     let uid;
-
     const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64").toString());
     uid = payload.uid;
-
     if (!uid) throw new Error("No UID found in token");
-
     await admin.auth().getUser(uid);
-
     const userDoc = await db.collection("users").doc(uid).get();
     if (!userDoc.exists) throw new Error("User not found");
-
     return { uid, ...userDoc.data() };
   }
 }

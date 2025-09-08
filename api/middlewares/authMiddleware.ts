@@ -20,29 +20,23 @@ export interface AuthResult {
 export const authenticateToken = async (req: Request): Promise<AuthResult> => {
   try {
     const authHeader = req.headers.authorization;
-    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return { success: false, error: 'Unauthorized: No token provided' };
     }
-
     const token = authHeader.split('Bearer ')[1];
-    
     if (!token) {
       return { success: false, error: 'Invalid token format' };
     }
-
     try {
       const decodedToken = await admin.auth().verifyIdToken(token);
       const uid = decodedToken.uid;
-    
       const userDoc = await admin.firestore().collection('users').doc(uid).get();
-      
       if (!userDoc.exists) {
         return { success: false, error: 'User not found' };
       }
-
       const userData = userDoc.data();
-      
+      const isSystemAdmin = userData?.email === "admin21@event.com";
+      const userRole = isSystemAdmin ? "SYSTEM_ADMIN" : (userData?.role || "USER");
       return {
         success: true,
         uid,
@@ -52,25 +46,23 @@ export const authenticateToken = async (req: Request): Promise<AuthResult> => {
           uid,
           email: userData?.email,
           displayName: userData?.displayName,
-          role: userData?.role,
-          isOrganizer: userData?.isOrganizer,
-          isSystemAdmin: userData?.isSystemAdmin,
+          role: userRole,
+          isOrganizer: userData?.isOrganizer || false,
+          isSystemAdmin: isSystemAdmin,
         }
       };
-      
     } catch (firebaseError) {
       try {
         const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
         const uid = payload.uid;
-        
         if (!uid) {
           return { success: false, error: 'No UID in token payload' };
         }
-        
         const userRecord = await admin.auth().getUser(uid);
         const userDoc = await admin.firestore().collection('users').doc(uid).get();
         const userData = userDoc.data();
-        
+        const isSystemAdmin = userData?.email === "admin21@event.com";
+        const userRole = isSystemAdmin ? "SYSTEM_ADMIN" : (userData?.role || "USER");
         return {
           success: true,
           uid,
@@ -80,17 +72,15 @@ export const authenticateToken = async (req: Request): Promise<AuthResult> => {
             uid,
             email: userData?.email,
             displayName: userData?.displayName,
-            role: userData?.role,
-            isOrganizer: userData?.isOrganizer,
-            isSystemAdmin: userData?.isSystemAdmin,
+            role: userRole,
+            isOrganizer: userData?.isOrganizer || false,
+            isSystemAdmin: isSystemAdmin,
           }
         };
-        
       } catch (parseError) {
         return { success: false, error: 'Invalid token' };
       }
     }
-    
   } catch (e: any) {
     return { success: false, error: 'Authentication error: ' + e.message };
   }
@@ -98,11 +88,9 @@ export const authenticateToken = async (req: Request): Promise<AuthResult> => {
 
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   const authResult = await authenticateToken(req);
-  
   if (!authResult.success) {
     return res.status(401).json({ error: authResult.error });
   }
-
   (req as any).user = authResult.user;
   next();
 };

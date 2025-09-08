@@ -18,9 +18,12 @@ export class UserController {
             }
 
             const userProfile = await this.userService.getUserProfile(userId);
-            res.status(200).json(userProfile);
-        } catch (error) {
-            res.status(500).json({ error: "Internal server error" });
+            res.status(200).json(userProfile); // This should send the data
+        } catch (error: any) {
+            console.error('Profile error:', error);
+            res.status(500).json({
+                error: error.message || "Internal server error"
+            });
         }
     };
 }

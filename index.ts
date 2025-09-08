@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import healthCheckHandler from "./api/utils/healthCheck";
 
-
+import adminRoutes from "./api/routes/adminRoutes";
 import authRoutes from "./api/routes/authRoutes";
 import eventsRoutes from "./api/routes/eventsRoutes";
 import organizerRoutes from "./api/routes/organizerRoutes";
@@ -42,7 +42,7 @@ app.get("/api/v1/auth/test-cors", (req, res) => {
 });
 
 app.get("/api/v1/health", healthCheckHandler);
-
+app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/events", eventsRoutes);
 app.use("/api/v1/organizer", organizerRoutes);
@@ -51,7 +51,7 @@ app.use("/api/v1/tracks", tracksRoutes);
 app.use("/api/v1/sessions", sessionsRoutes);
 app.use("/api/v1", stallsRoutes);
 app.use("/api/v1/tickets", ticketRoutes);
-app.use("/api/v1/users", userRoutes);
+app.use("/api/user", userRoutes);
 
 
 const PORT = process.env.PORT || 3001;
