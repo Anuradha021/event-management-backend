@@ -124,4 +124,30 @@ export class EventsService {
 
     return { message: "Event published successfully" };
   }
+
+  async submitEventRequest(req: any) {
+    const authResult = await authenticateToken(req);
+    if (!authResult.success) return { authResult };
+
+    const { eventTitle, eventDescription, organizerName, organizerEmail, location, eventDate } = req.body;
+    if (!eventTitle || !eventDescription || !organizerName || !organizerEmail || !location || !eventDate) {
+      throw new Error("Missing required fields");
+    }
+
+    const newRequest = {
+      eventTitle,
+      eventDescription,
+      organizerName,
+      organizerEmail,
+      location,
+      eventDate: new Date(eventDate),
+      status: "pending",
+      requesterUid: authResult.uid,
+      createdAt: new Date(),
+    };
+
+    await db.collection("event_requests").add(newRequest);
+
+    return { message: "Event request submitted successfully" };
+  }
 }

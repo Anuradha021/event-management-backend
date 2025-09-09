@@ -51,10 +51,10 @@ app.use("/api/v1/tracks", tracksRoutes);
 app.use("/api/v1/sessions", sessionsRoutes);
 app.use("/api/v1", stallsRoutes);
 app.use("/api/v1/tickets", ticketRoutes);
-app.use("/api/user", userRoutes);
+app.use("/api/v1/user", userRoutes);
 
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://10.0.2.2:${PORT}`);
 });

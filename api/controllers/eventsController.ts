@@ -67,4 +67,17 @@ export class EventsController {
       return res.status(500).json({ success: false, error: e.message });
     }
   };
+
+  public submitEventRequest = async (req: Request, res: Response) => {
+    try {
+      const result = await this.eventsService.submitEventRequest(req);
+      if ("authResult" in result && result.authResult && !result.authResult.success) {
+        return res.status(401).json(result.authResult);
+      }
+
+      return res.status(201).json({ success: true, ...result });
+    } catch (e: any) {
+      return res.status(500).json({ success: false, error: e.message });
+    }
+  };
 }

@@ -176,7 +176,8 @@ export class AdminController {
                 status: "approved",
                 approvedBy: authResult.user.uid,
                 approvedAt: new Date(),
-                createdAt: new Date()
+                createdAt: new Date(),
+                assignedOrganizerUid: requestData?.requesterUid,
             });
             await requestRef.update({
                 status: "approved",
