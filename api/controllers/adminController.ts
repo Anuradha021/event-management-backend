@@ -184,6 +184,12 @@ export class AdminController {
                 approvedBy: authResult.user.uid,
                 approvedAt: new Date()
             });
+
+            // Update user role to organizer
+            if (requestData?.requesterUid) {
+                const userRef = db.collection("users").doc(requestData.requesterUid);
+                await userRef.update({ role: "organizer", isOrganizer: true });
+            }
             return res.status(200).json({ message: "Event approved and created successfully" });
         } catch (e: any) {
             return res.status(500).json({ error: e.message || "Failed to approve event request" });

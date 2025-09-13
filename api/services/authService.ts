@@ -2,15 +2,7 @@ import admin from "firebase-admin";
 import { db } from "../config/firebase";
 
 export class AuthService {
-  static getUserProfile(token: string) {
-    throw new Error("Method not implemented.");
-  }
-  static login(email: any, password: any) {
-    throw new Error("Method not implemented.");
-  }
-  static signup(email: any, password: any, name: any, role: any) {
-    throw new Error("Method not implemented.");
-  }
+  
   async login(email: string, password: string) {
     const user = await admin.auth().getUserByEmail(email);
     const customToken = await admin.auth().createCustomToken(user.uid);

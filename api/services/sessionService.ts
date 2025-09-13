@@ -21,6 +21,33 @@ export class SessionsService {
             throw new Error("End time must be after start time");
         }
 
+        let sessionRef;
+        if (zoneId === 'default' && trackId === 'default') {
+            const defaultZoneRef = db.collection('events').doc(eventId).collection('zones').doc('default');
+            const defaultTrackRef = defaultZoneRef.collection('tracks').doc('default');
+
+            await db.runTransaction(async (transaction) => {
+                const defaultZoneDoc = await transaction.get(defaultZoneRef);
+                const defaultTrackDoc = await transaction.get(defaultTrackRef);
+
+                if (!defaultZoneDoc.exists) {
+                    transaction.set(defaultZoneRef, { title: 'Default Zone', description: 'Default zone for sessions' });
+                }
+
+                if (!defaultTrackDoc.exists) {
+                    transaction.set(defaultTrackRef, { title: 'Default Track', description: 'Default track for sessions' });
+                }
+            });
+
+            sessionRef = defaultTrackRef.collection('sessions');
+        } else {
+            sessionRef = db
+                .collection("events").doc(eventId)
+                .collection("zones").doc(zoneId)
+                .collection("tracks").doc(trackId)
+                .collection("sessions");
+        }
+
         const sessionData = {
             title,
             description: description || "",
@@ -32,14 +59,9 @@ export class SessionsService {
             createdBy: authResult.uid,
         };
 
-        const sessionRef = await db
-            .collection("events").doc(eventId)
-            .collection("zones").doc(zoneId)
-            .collection("tracks").doc(trackId)
-            .collection("sessions")
-            .add(sessionData);
+        const newSession = await sessionRef.add(sessionData);
 
-        return { sessionId: sessionRef.id, ...sessionData };
+        return { sessionId: newSession.id, ...sessionData };
     }
 
     public async getSessions(req: Request) {

@@ -112,7 +112,7 @@ export class EventsService {
     if (!eventDoc.exists) throw new Error("Event not found");
 
     const eventData = eventDoc.data();
-    if (eventData?.organizerUid !== authResult.uid) {
+    if (eventData?.organizerUid !== authResult.uid && eventData?.assignedOrganizerUid !== authResult.uid) {
       throw new Error("Access denied. You are not the organizer of this event");
     }
 

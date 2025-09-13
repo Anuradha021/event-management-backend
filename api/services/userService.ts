@@ -24,7 +24,6 @@ export class UserService {
 
             const userData = userDoc.data();
 
-            // Ensure all required fields are present
             return {
                 id: userDoc.id,
                 name: userData?.name || userData?.displayName || "User",
